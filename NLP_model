@@ -1,0 +1,64 @@
+import urllib.request
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from konlpy.tag import Okt
+from tqdm import tqdm
+import re
+# seperate title [ 1. 리뷰 파일 다운로드 ] ==========================================#
+urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt", filename="ratings_train.txt")
+urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_test.txt", filename="ratings_test.txt")
+
+# seperate title [ 2. Pandas 데이터 확인 ] ==========================================#
+train_data = pd.read_table('ratings_train.txt')
+test_data = pd.read_table('ratings_test.txt')
+print(train_data.info())
+print(test_data.info())
+#>>> 출력결과
+#>>> train_data
+#>>> <class 'pandas.core.frame.DataFrame'>
+#>>>  #   Column    Non-Null Count   Dtype 
+#>>> ---  ------    --------------   ----- 
+#>>>  0   id        150000 non-null  int64 
+#>>>  1   document  149995 non-null  object
+#>>>  2   label     150000 non-null  int64 
+#>>> dtypes: int64(2), object(1)
+#>>> test_data
+#>>> <class 'pandas.core.frame.DataFrame'>
+#>>>  #   Column    Non-Null Count  Dtype 
+#>>> ---  ------    --------------  ----- 
+#>>>  0   id        50000 non-null  int64 
+#>>>  1   document  49997 non-null  object
+#>>>  2   label     50000 non-null  int64 
+#>>> dtypes: int64(2), object(1)
+# 개발자 분석내용 - document 필드의 수량이 label 필드의 수량과 다르므로 결측 데이터가 존재한다
+
+# seperate title [ 3. 결측 데이터 수량 확인 및 제거 ] ==========================================#
+#>>> document 필드 결측치 수량
+print("훈련데이터 결측치 수량",train_data["document"].isna().sum())
+print("테스트데이터 결측치 수량",test_data["document"].isna().sum())
+#>>> 결측값 제거 후 결측치 수량 확인
+train_data = train_data.dropna(subset = ["document"]) # (axis=0, subset=["document"])
+test_data = test_data.dropna(subset = ["document"]) # (axis=0, subset=["document"])
+print("훈련데이터 결측치 수량",train_data["document"].isna().sum())
+print("훈련데이터 결측치 수량",test_data["document"].isna().sum())
+#>>> 출력결과
+#>>> 훈련데이터 결측치 수량 5
+#>>> 테스트데이터 결측치 수량 3
+#>>> 훈련데이터 결측치 수량 0
+#>>> 훈련데이터 결측치 수량 0
+# 개발자 분석내용 - 훈련데이터의 결측데이터 5개, 테스트데이터의 결측데이터 3개가 확인되어 pandas의 dropna 명령으로 제거
+
+# seperate title [ 4. 중복 데이터 확인 및 제거 ] ==========================================#
+#>>> document 중복 검사
+print(train_data["document"].count()) # 총 데이터 수량
+print(train_data["document"].nunique()) # 유일한 데이터 수량
+print("중복 훈련데이터의 수 =", train_data["document"].count() - train_data["document"].nunique())
+print(test_data["document"].count())
+print(test_data["document"].nunique())
+print("중복 테스트데이터의 수 =", test_data["document"].count() - test_data["document"].nunique())
+#>>> 중복 데이터 제거
+train_data = train_data.drop_duplicates(subset=["document"])
+test_data = test_data.drop_duplicates(subset=["document"])
+print("중복된 훈련데이터의 수 =", train_data["document"].count() - train_data["document"].nunique())
+print("중복된 테스트데이터의 수 =", test_data["document"].count() - test_data["document"].nunique())
